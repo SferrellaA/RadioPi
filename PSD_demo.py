@@ -10,5 +10,5 @@ print(f"Listenign on {f}")
 
 # The demo
 sample = listen(freq)
-graph(sample, freq)
+graph(sample, freq, title=f"{f} Capture")
 display()

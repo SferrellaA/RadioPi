@@ -29,7 +29,7 @@ def colorCorrect(img: Image):
             # arbitrary color cutoffs
             # red and black must be swapped b/c???
             r, g, b = pixels[x,y]
-            if r > 85 and g <= 40 and b <= 50:
+            if r > 70 and g <= 40 and b <= 50:
                 pixels[x,y] = (0,0,0) 
             elif r >= 200 and g >= 200 and b >= 200:
                 pixels[x,y] = (255,255,255)
@@ -60,20 +60,32 @@ def listen(centerFrequency, byteCount=1024, sampleRate=1.2e6):
     return sample
 
 # Graph a power distribution sample into a line graph
-def graph(sample, centerFrequency, title=None, xLabel=None, yLabel=None, sampleRate=1.2, size=(4.3,3.2), color='red', fileName='figure.png'):
-    import matplotlib.pyplot as plt
-    plt.figure(num=None, figsize=size) # screen is 3.33x2.5 inches, 400x300 pixels (4.3,3.2)
-    plt.psd(x=sample, 
-            NFFT=1024, 
-            Fs=sampleRate, 
-            Fc=scaleDown(centerFrequency), # only in FM rn
-            color=color, 
-            )
+# with ylabel it's 4.45, w/o it's 4.72
+# with xlabel it's 3.05, w/o it's 3.2, without title or xlabel it's 3.5
+def graph(sample, centerFrequency, title=None, xLabel=None, yLabel=None, sampleRate=1.2, size=(4.75,3.5), color='red', fileName='figure.png'):
+    # screen == 4.75"x3.5" 
+    # + title == --0.3"
+    # + xlabel == --0.15"
+    # + ylabel == --0.3"
     if title != None:
-        plt.title = title
+        size = (size[0], size[1] - 0.3)
+    if xLabel != None:
+        size = (size[0], size[1] - 0.15)
+    if yLabel != None:
+        size = (size[0] - 0.3, size[1])
+
+    import matplotlib.pyplot as plt
+    plt.figure(num=None, figsize=size) 
+    plt.psd(x=sample, 
+        NFFT=1024, 
+        Fs=sampleRate, 
+        Fc=scaleDown(centerFrequency), # only in FM rn
+        color=color, 
+        )
+    plt.title(title)
     plt.xlabel(xLabel) 
     plt.ylabel(yLabel)
-    plt.savefig(fileName, bbox_inches='tight') #, pad_inches=0)
+    plt.savefig(fileName, bbox_inches='tight', pad_inches=0)
     print(f'Generated figure {fileName} ({size[0]}x{size[1]} inches)')
 
 # Display an image on the inky display
@@ -83,14 +95,13 @@ def display(imageFile='figure.png'):
 
     # color correct for the eink display
     colorCorrect(img)
-    img = img.convert('P', palette=Image.ADAPTIVE)#, colors=3)
+    img = img.convert('P', palette=Image.ADAPTIVE)
     print(f'Color-corrected {imageFile} for eink display')
  
     from inky.auto import auto
     display = auto()
     img = img.transpose(Image.FLIP_TOP_BOTTOM) #just because of how the screen sits on my desk
     img = img.transpose(Image.FLIP_LEFT_RIGHT)
-    #img = img.resize(display.resolution)
     display.set_image(img)
     display.show()
     print(f'Displaying {imageFile}')

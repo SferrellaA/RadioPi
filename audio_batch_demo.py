@@ -31,9 +31,9 @@ from scipy.signal import decimate, lfilter
 sample = np.array(sample).astype("complex64")
 
 # Narrow sample to the single station
-dec_rate = int(sampleRate / 200e3) # fm broadcasts use 200khz bandwidth
-sampleRate /= dec_rate
-sample = decimate(sample, dec_rate)
+# fm broadcasts use 200khz (200e3) bandwidth
+sample = decimate(sample, int(sampleRate / 200e3))
+sampleRate = float(200e3)
 
 # "demodulate with a polar discriminator"
 # I still need to learn what that means

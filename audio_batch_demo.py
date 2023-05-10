@@ -1,7 +1,7 @@
 # Credits to https://witestlab.poly.edu/blog/capture-and-decode-fm-radio/
-from helpers import frequency
 
 # Get the frequency to listen on
+from helpers import frequency
 from sys import argv
 f = "89.7FM"
 if len(argv) > 1:
@@ -11,7 +11,7 @@ print(f"Listenign on {f}")
 
 # Configure sample characteristics
 sampleRate = 1.2e6 
-sampleLength = 3 # seconds
+sampleLength = 2 # seconds
 freq = freq - 600000 # determined from manual testing
 
 # Sample the radio
@@ -25,7 +25,6 @@ sdr.close()
 
 # Prepare to do maths
 import numpy as np
-#from scipy import signal
 from scipy.signal import decimate, lfilter
 
 # Convert sample to a numpy array

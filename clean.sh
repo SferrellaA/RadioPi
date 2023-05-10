@@ -1,4 +1,4 @@
 #!/bin/bash
-rm *.png
-rm *.raw
-rm *.wav
+if [ -f "*.png" ]; then rm "*.png"; fi
+if [ -f "*.raw" ]; then rm "*.raw"; fi
+if [ -f "*.wav" ]; then rm "*.wav"; fi

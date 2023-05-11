@@ -36,6 +36,23 @@ def colorCorrect(img: Image):
             else:
                 pixels[x,y] = (255,0,0) 
 
+# Configure the radio
+def configureRadio(centerFrequency, sampleRate):
+    from rtlsdr import RtlSdr
+    sdr = RtlSdr()
+    sdr.sample_rate = sampleRate
+    sdr.center_freq = centerFrequency
+    sdr.gain = 'auto'
+    return sdr
+
+# Listen to relative power around the centerFrequency
+def listen(centerFrequency, byteCount=1024, sampleRate=1.2e6):
+    sdr = configureRadio(centerFrequency, sampleRate)    
+    sample = sdr.read_bytes(byteCount*128)
+    sdr.close()
+    print(f'Sampled {byteCount} bytes')
+    return sample
+
 def scaleDown(freq: float):
     div = 1e3
     while True:
@@ -46,18 +63,6 @@ def scaleDown(freq: float):
         else:
             div *= 1e3
     return freq/div
-
-# Listen to relative power around the centerFrequency
-def listen(centerFrequency, byteCount=1024, sampleRate=1.2e6):
-    from rtlsdr import RtlSdr
-    sdr = RtlSdr()
-    sdr.sample_rate = sampleRate
-    sdr.center_freq = centerFrequency
-    sdr.gain = 'auto'
-    sample = sdr.read_bytes(byteCount*128)
-    sdr.close()
-    print(f'Sampled {byteCount} bytes')
-    return sample
 
 # Graph a power distribution sample into a line graph
 # with ylabel it's 4.45, w/o it's 4.72
@@ -105,3 +110,41 @@ def display(imageFile='figure.png'):
     display.set_image(img)
     display.show()
     print(f'Displaying {imageFile}')
+
+# Format a FM sample into audio
+# Credits to https://witestlab.poly.edu/blog/capture-and-decode-fm-radio/
+def formatSample(sample, sampleRate):
+    from scipy.signal import decimate, lfilter
+    import numpy as np
+    br = float(200e3) #FM broadcasts have a range of 200khz
+
+    sample = decimate(sample, int(sampleRate / br))
+    sample = np.angle(sample[1:] * np.conj(sample[:-1]))
+    x = np.exp(-1/(br * 75e-6)) 
+    sample = lfilter([1-x], [1,-x], sample)
+    sample = decimate(sample, int(br/44100.0))
+    sample *= 30000 / np.max(np.abs(sample))
+    return sample
+
+# Run a system command after first checking tool is installed
+def execCommand(command):
+    from shutil import which
+    tool = command.split()[0]
+    if which(tool) == None:
+        exit(f"{tool} not found")
+    from os import system
+    system(command)
+
+# Shortcut function for sample helpers
+def audiateSample(sample, sampleRate, audioName):
+    sample = formatSample(sample, sampleRate)
+    sample.astype("int16").tofile(f"{audioName}.raw")
+    execCommand(f'ffmpeg -hide_banner -loglevel error -y -f s16le -r {sampleRate} -i {audioName}.raw {audioName}')
+    execCommand(f'cvlc --quiet --play-and-exit {audioName}')
+    # TODO -- check alternate tools to play audio with
+
+# Alternate audiate helper shortcut
+def audiateCapture(rawFile, sampleRate, audioName):
+    execCommand(f'ffmpeg -hide_banner -loglevel error -y -f s16le -r {sampleRate} -i {rawFile} {audioName}')
+    execCommand(f'cvlc --quiet --play-and-exit {audioName}')
+

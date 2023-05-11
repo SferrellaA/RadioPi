@@ -1,3 +1,4 @@
+# Convert a shorthand name for a radio frequency into a float
 def frequency(shortHand):
     freq = 1
     def parser(mod, list):
@@ -172,16 +173,17 @@ def execCommand(command):
     from os import system
     system(command)
 
-# Shortcut function for sample helpers
-def audiateSample(sample, audioName, sampleRate=1.2e6):
-    sample = formatSample(sample, sampleRate)
-    sample.astype("int16").tofile(f"{audioName}.raw")
-    execCommand(f'ffmpeg -hide_banner -loglevel error -y -f s16le -r {sampleRate} -i {audioName}.raw {audioName}')
-    execCommand(f'cvlc --quiet --play-and-exit {audioName}')
-    # TODO -- check alternate tools to play audio with
-
-# Alternate audiate helper shortcut
+# Convert and play a raw audio file
 def audiateCapture(rawFile, audioName, sampleRate=1.2e6):
     execCommand(f'ffmpeg -hide_banner -loglevel error -y -f s16le -r {sampleRate} -i {rawFile} {audioName}')
     execCommand(f'cvlc --quiet --play-and-exit {audioName}')
+
+# Format and play a radio sample
+def audiateSample(sample, audioName, sampleRate=1.2e6):
+    sample = formatSample(sample, sampleRate)
+    rawFile = f"{audioName}.raw"
+    sample.astype("int16").tofile(rawFile)
+    audiateCapture(rawFile, audioName)
+    # TODO -- check alternate tools to play audio with
+
 

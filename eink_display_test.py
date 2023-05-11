@@ -1,32 +1,33 @@
-from helpers import graph, display
+#!/usr/bin/python
+from helpers import graphPSD, display
 from numpy import random as np
 
 freq = 0
 sample = np.random(1024)
 
-graph(sample, freq)
+graphPSD(sample, freq)
 display()
 input("No title, x label, nor y label")
 
-graph(sample, freq, title="Title")
+graphPSD(sample, freq, title="Title")
 display()
 input("Just the title")
 
-graph(sample, freq, xLabel="xlabel")
+graphPSD(sample, freq, xLabel="xlabel")
 display()
 input("Just the x label")
 
-graph(sample, freq, yLabel="ylabel")
+graphPSD(sample, freq, yLabel="ylabel")
 display()
 input("Just the y label")
 
-graph(sample, freq, title="Title", xLabel="xlabel")
+graphPSD(sample, freq, title="Title", xLabel="xlabel")
 display()
 input("Title and x label")
 
-graph(sample, freq, title="Title", yLabel="ylabel")
+graphPSD(sample, freq, title="Title", yLabel="ylabel")
 display()
 input("Title and y label")
 
-graph(sample, freq, title="Title", xLabel="xlabel", yLabel="ylabel")
+graphPSD(sample, freq, title="Title", xLabel="xlabel", yLabel="ylabel")
 display("Title, x label, and y label")

@@ -45,12 +45,41 @@ def configureRadio(centerFrequency, sampleRate):
     sdr.gain = 'auto'
     return sdr
 
-# Listen to relative power around the centerFrequency
-def listen(centerFrequency, byteCount=1024, sampleRate=1.2e6):
-    sdr = configureRadio(centerFrequency, sampleRate)    
-    sample = sdr.read_bytes(byteCount*128)
-    sdr.close()
-    print(f'Sampled {byteCount} bytes')
+# Capture sample of length on center frequency
+def sampleAudio(centerFrequency, sampleLength, sampleRate=1.2e6, outFile=None):
+    import asyncio
+    from time import time
+    from os import system, listdir
+
+    # Collect samples
+    sdr = configureRadio(centerFrequency, sampleRate)
+    system('rm ./raw/*') # clear prior captures
+    async def streaming(start, length):
+        async for sample in sdr.stream():
+            #sample *= np.exp(-1.0j*2.0*np.pi*400000/sampleRate*np.arange(len(sample)))
+            sample = formatSample(sample, sampleRate)
+            sample.astype("int16").tofile(f"raw/{time()}.raw")
+
+            # this is such a jank way to set a timer
+            if time() - start  >= length:
+                break
+        await sdr.stop()
+        sdr.close()
+    asyncio.get_event_loop().run_until_complete(streaming(time(), sampleLength))
+
+    # Merge samples
+    print(f"Saving samplign to {outFile}")
+    out = open(outFile, 'wb')
+    for part in listdir('./raw'):
+        out.write(open(f'./raw/{part}', 'rb').read())
+    out.close()
+
+def listen(centerFrequency, sampleLength, sampleRate=1.2e6):
+    import numpy as np
+    tempFile = f"{centerFrequency}.raw"
+    # TODO -- handle non-audio samples
+    sampleAudio(centerFrequency, sampleLength, sampleRate=sampleRate, outFile=tempFile)
+    sample = np.fromfile(tempFile, dtype="int16")
     return sample
 
 def scaleDown(freq: float):
@@ -65,9 +94,7 @@ def scaleDown(freq: float):
     return freq/div
 
 # Graph a power distribution sample into a line graph
-# with ylabel it's 4.45, w/o it's 4.72
-# with xlabel it's 3.05, w/o it's 3.2, without title or xlabel it's 3.5
-def graph(sample, centerFrequency, title=None, xLabel=None, yLabel=None, sampleRate=1.2, size=(4.75,3.5), color='red', fileName='figure.png'):
+def graphPSD(sample, centerFrequency, title=None, xLabel=None, yLabel=None, sampleRate=1.2, size=(4.75,3.5), color='red', fileName='figure.png'):
     # screen == 4.75"x3.5" 
     # + title == --0.3"
     # + xlabel == --0.15"
@@ -118,12 +145,22 @@ def formatSample(sample, sampleRate):
     import numpy as np
     br = float(200e3) #FM broadcasts have a range of 200khz
 
+    # narrow sample to single station (200khz bandwidth)
     sample = decimate(sample, int(sampleRate / br))
+
+    # "demodulate with a polar discriminator"
     sample = np.angle(sample[1:] * np.conj(sample[:-1]))
+
+    # De-emphasis the sample (Americas use 75 µs)
     x = np.exp(-1/(br * 75e-6)) 
     sample = lfilter([1-x], [1,-x], sample)
+
+    # Narrow to just monoaudio range of FM broadcast
     sample = decimate(sample, int(br/44100.0))
+
+    # Increase the volume
     sample *= 30000 / np.max(np.abs(sample))
+    
     return sample
 
 # Run a system command after first checking tool is installed
@@ -136,7 +173,7 @@ def execCommand(command):
     system(command)
 
 # Shortcut function for sample helpers
-def audiateSample(sample, sampleRate, audioName):
+def audiateSample(sample, audioName, sampleRate=1.2e6):
     sample = formatSample(sample, sampleRate)
     sample.astype("int16").tofile(f"{audioName}.raw")
     execCommand(f'ffmpeg -hide_banner -loglevel error -y -f s16le -r {sampleRate} -i {audioName}.raw {audioName}')
@@ -144,7 +181,7 @@ def audiateSample(sample, sampleRate, audioName):
     # TODO -- check alternate tools to play audio with
 
 # Alternate audiate helper shortcut
-def audiateCapture(rawFile, sampleRate, audioName):
+def audiateCapture(rawFile, audioName, sampleRate=1.2e6):
     execCommand(f'ffmpeg -hide_banner -loglevel error -y -f s16le -r {sampleRate} -i {rawFile} {audioName}')
     execCommand(f'cvlc --quiet --play-and-exit {audioName}')
 

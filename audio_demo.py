@@ -5,24 +5,21 @@ Capture an FM broadcast and listen to it's audio!
 
 # Imports
 from helpers import frequency, audiateCapture, sampleAudio
-from sys import argv
+from argparse import ArgumentParser
 
 # Get the frequency, length to sample
-f = "94.5FM"
-if len(argv) > 1:
-    f = argv[1]
-freq = frequency(f)
-s = 5
-if len(argv) > 2:
-    s = int(argv[2])
+flags = ArgumentParser()
+flags.add_argument("-f", "--freq", "--frequency", default="94.5FM")
+flags.add_argument("-s", "--sec", "--seconds", default=5, type=int)
+demo = flags.parse_args()
 
 # Write what files to store sample, audio to
-sampleFile = f"{f}_capture.raw"
-audioFile = f"{f}_capture.wav"
+sampleFile = f"{demo.freq}_capture.raw"
+audioFile = f"{demo.freq}_capture.wav"
 
-# Capture S seconds of audio
-print(f"Sampling on {f} for {s} seconds")
-sampleAudio(centerFrequency=freq, sampleLength=s, outFile=sampleFile)
+# Capture some seconds of audio
+print(f"Sampling on {demo.freq} for {demo.sec} seconds")
+sampleAudio(centerFrequency=frequency(demo.freq), sampleLength=demo.sec, outFile=sampleFile)
 
 # Play the captured audio
 print(f"Playing {audioFile}")

@@ -14,26 +14,25 @@ aims to help with.
 
 # Imports
 from helpers import frequency, listen, audiateSample
-from sys import argv
 import matplotlib.pyplot as plt
+from argparse import ArgumentParser
 
-# Get the frequency to listen on
-f = "94.5FM"
-if len(argv) > 1:
-    f = argv[1]
-freq = frequency(f)
-print(f"Listenign on {f}")
+# Get the frequency, length to sample
+flags = ArgumentParser()
+flags.add_argument("-f", "--freq", "--frequency", default="94.5FM")
+flags.add_argument("-s", "--sec", "--seconds", default=5, type=int)
+demo = flags.parse_args()
 
 # Collect radio sample
-sample = listen(centerFrequency=freq, sampleLength=5)
-print(f"Collected {f} sample")
+sample = listen(centerFrequency=frequency(demo.freq), sampleLength=demo.sec)
+print(f"Collected {demo.freq} sample")
 
 # Graph the sample
 plt.specgram(sample, NFFT=2048, Fs=1.2e6)
-plt.savefig(f"{f}.png")
+plt.savefig(f"{demo.freq}.png")
 plt.close()
-print(f"Generated sample visualization ({f}.png)")
+print(f"Generated sample visualization ({demo.freq}.png)")
 
 # Play sample as audio
 print("Playing sample as audio")
-audiateSample(sample, f"{f}_sample.wav")
+audiateSample(sample, f"{demo.freq}_sample.wav")

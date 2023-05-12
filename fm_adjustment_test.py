@@ -1,4 +1,18 @@
 #!/usr/bin/python
+'''
+FM radio stations broadcast within a 200khz band of radio spectrum
+
+but
+
+The local FM stations where I live are not consistently tuned, with
+some stations broadcasting at offsets. This isn't a problem when
+tuning a radio with physical knobs, but a digital radio will only 
+collect exactly what you tell it to. Being able to see if the SDR
+is tuned correctly requires trial-and-error, which this test file 
+aims to help with.
+'''
+
+# Imports
 from helpers import frequency, listen, audiateSample
 from sys import argv
 from time import time
@@ -21,13 +35,6 @@ plt.specgram(sample, NFFT=2048, Fs=1.2e6)
 plt.savefig(f"{t}.png")
 plt.close()
 print(f"Generated sample visualization ({t}.png)")
-
-'''
-# Local FM stations are not consistently tuned within their 200khz band -- an autotuning function is needed
-sample *= np.exp(-1.0j*2.0*np.pi*400000/sampleRate*np.arange(len(sample)))
-plt.specgram(sample, NFFT=2048, Fs=sampleRate)
-plt.savefig(f"adjusted_{t}.png")
-'''
 
 # Play sample as audio
 print("Playing sample as audio")

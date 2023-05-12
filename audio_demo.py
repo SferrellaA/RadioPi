@@ -1,4 +1,9 @@
 #!/usr/bin/python
+'''
+Capture an FM broadcast and listen to it's audio!
+'''
+
+# Imports
 from helpers import frequency, audiateCapture, sampleAudio
 from sys import argv
 
@@ -11,10 +16,14 @@ s = 5
 if len(argv) > 2:
     s = int(argv[2])
 
+# Write what files to store sample, audio to
+sampleFile = f"{f}_capture.raw"
+audioFile = f"{f}_capture.wav"
+
 # Capture S seconds of audio
 print(f"Sampling on {f} for {s} seconds")
-sampleAudio(freq, s, outFile=f"{f}_capture.raw")
+sampleAudio(centerFrequency=freq, sampleLength=s, outFile=sampleFile)
 
 # Play the captured audio
-print(f"Playing {f}_capture.wav")
-audiateCapture(f"{f}_capture.raw", f"{f}_capture.wav")
+print(f"Playing {audioFile}")
+audiateCapture(rawFile=sampleFile, audioName=audioFile)

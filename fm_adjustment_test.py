@@ -15,7 +15,6 @@ aims to help with.
 # Imports
 from helpers import frequency, listen, audiateSample
 from sys import argv
-from time import time
 import matplotlib.pyplot as plt
 
 # Get the frequency to listen on
@@ -26,15 +25,14 @@ freq = frequency(f)
 print(f"Listenign on {f}")
 
 # Collect radio sample
-t = time()
-sample = listen(freq, 5)
+sample = listen(centerFrequency=freq, sampleLength=5)
 print(f"Collected {f} sample")
 
 # Graph the sample
 plt.specgram(sample, NFFT=2048, Fs=1.2e6)
-plt.savefig(f"{t}.png")
+plt.savefig(f"{f}.png")
 plt.close()
-print(f"Generated sample visualization ({t}.png)")
+print(f"Generated sample visualization ({f}.png)")
 
 # Play sample as audio
 print("Playing sample as audio")

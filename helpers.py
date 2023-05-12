@@ -79,7 +79,7 @@ def listen(centerFrequency, sampleLength, sampleRate=1.2e6):
     import numpy as np
     tempFile = f"{centerFrequency}.raw"
     # TODO -- handle non-audio samples
-    sampleAudio(centerFrequency, sampleLength, sampleRate=sampleRate, outFile=tempFile)
+    sampleAudio(centerFrequency, sampleLength, sampleRate, tempFile)
     sample = np.fromfile(tempFile, dtype="int16")
     return sample
 
@@ -119,7 +119,9 @@ def graphPSD(sample, centerFrequency, title=None, xLabel=None, yLabel=None, samp
     plt.xlabel(xLabel) 
     plt.ylabel(yLabel)
     plt.savefig(fileName, bbox_inches='tight', pad_inches=0)
+
     print(f'Generated figure {fileName} ({size[0]}x{size[1]} inches)')
+    return fileName
 
 # Display an image on the inky display
 def display(imageFile='figure.png'):
